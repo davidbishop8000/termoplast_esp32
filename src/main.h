@@ -11,6 +11,7 @@
 #include <Update.h>
 #include "TFT_eSPI.h"
 #include "SPIFFS.h"
+#include <esp_task_wdt.h>
 
 #include "alite.h"
 #include "panel_page.h"
@@ -19,8 +20,13 @@
 #include "params_page.h"
 #include "update_esp.h"
 #include "update_stm.h"
+#include "help_page.h"
+//#include "rus_font.h"
+
+#define WDT_TIMEOUT 4
 
 #define PIN_POWER_ON	15
+//screen size 170x320
 
 #define stm_firmware "/termoplast.bin"
 #define esp_firmware "/termo_wifi.bin"
@@ -40,6 +46,8 @@ typedef struct {
 	float temp3;
 	uint16_t sensors;
 	uint16_t errors;
+	uint32_t cycles_count;
+	uint32_t cycles_set;
 	uint8_t status;
 	uint8_t cs_errors;
 	uint8_t reserv1;

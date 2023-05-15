@@ -145,13 +145,8 @@ if (!!window.EventSource) {
 
 #define WRITE_ADDR 0x08000000
 #define SIZE_WRITE 256
-#if defined(CONFIG_IDF_TARGET_ESP32S3)
-	#define RX_GPIO 10
-  #define TX_GPIO 11
-#else
-	#define RX_GPIO 16
-  #define TX_GPIO 17
-#endif
+#define RX_GPIO 10
+#define TX_GPIO 11
 
 #define BOOT_GPIO 12
 #define RESET_GPIO 3

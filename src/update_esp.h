@@ -95,4 +95,42 @@ const char update_esp[] PROGMEM = R"rawliteral(
   </script></body></html>
 )rawliteral";
 
+const char reboot_html[] PROGMEM = R"rawliteral(
+<!DOCTYPE HTML><html><head>
+  <meta charset="utf-8">
+  <title>Shuttle Portal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Refresh" content="10; URL=/">
+  <style>
+    h1{color:white;border-radius:0.5em;margin: 3px;font-size:1.2em;padding:0.2em 0.2em;background:#810000;text-align: center}
+    h2{color:white;border-radius:0.5em;margin: 3px;font-size:1em;padding:0.2em 0.2em;background:#4a4a4a;text-align: center}
+    footer{background-color:#810000; color: white;margin: 3px;text-align:center;padding:0.3em 0.3em;border-radius:0.375em;font-size:60%;text-align: center}
+    body {
+        display: grid;
+        grid-template-columns: 1fr;
+        background-color: #4a4a4a;
+    }
+    a {
+        width: 210px;
+        margin: 3px auto;
+        padding: 10px;
+        background-color: #666666;
+        color: white;
+        border-radius: 10px;
+        text-align: center;
+      }
+       * {font-family: "Lucida Console";}
+    </style>
+  </head><body>
+  <h1>Настройки сохранены!</h1>
+  <br><br>
+  <h2>Вы будете перенаправлены</h2>
+  <h2>на страницу управления шаттлом.</h2>
+  <br>
+  <a href="/">Перейти</a>
+  <br><br><br>
+  <footer>&copy;skynet</footer>
+</body></html>
+)rawliteral";
+
 #endif /* INC_UPDATE_ESP_H_ */

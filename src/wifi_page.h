@@ -77,7 +77,7 @@ const char wifi_html[] PROGMEM = R"rawliteral(
   <br>
   Настройки по умолчанию:
   <br>
-  Точка доступа: Shuttle
+  Точка доступа: Termoplast
   <br>
   IP: 192.168.1.1
   <br>

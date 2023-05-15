@@ -1,6 +1,6 @@
 #include "main.h"
 
-// const char *soft_ssid = "Shuttle";
+const char *soft_ssid = "Termoplast";
 const char *soft_pass = "atomic2023";
 
 const uint8_t IP[4] = {192, 168, 1, 1};
@@ -44,9 +44,14 @@ AsyncEventSource events("/events");
 
 File fsUploadFile;
 
-uint8_t settDataIn[100];
+uint8_t settDataIn[50];
 
 StatusMsgTypeDef statusMsg;
+
+void notFound(AsyncWebServerRequest *request)
+{
+    request->send(404, "application/json", "{\"message\":\"Not found\"}");
+}
 
 String processor(const String &var)
 {
@@ -122,7 +127,7 @@ void getSerialData()
   {
     settDataIn[count_inbyte] = Serial1.read();
     count_inbyte++;
-    if (count_inbyte >= 100)
+    if (count_inbyte >= 50)
     {
       count_inbyte = 0;
       break;
@@ -136,31 +141,30 @@ void getSerialData()
       {
         memcpy(&statusMsg, settDataIn, sizeof(StatusMsgTypeDef));
         count_inbyte = 0;
+        //statusMsg.temp1+=8.0;
       }
     }
-    else
-    {
-      // if (g_request != NULL) {
-      //  g_request->send(http_200, "application/json", "{message: \"ok\"}");
-      //}
-    }
+    else count_inbyte = 0;
   }
-  else
-    count_inbyte = 0;
+  else count_inbyte = 0;
   serial_busy = 0;
 }
 
 void statusToJSON(StaticJsonDocument<512> &data)
 {
-  data["temp1"] = statusMsg.temp1;
-  data["temp2"] = statusMsg.temp2;
-  data["temp3"] = statusMsg.temp3;
+  data["t1"] = statusMsg.temp1;
+  data["t2"] = statusMsg.temp2;
+  data["t3"] = statusMsg.temp3;
+  data["c_cou"] = statusMsg.cycles_count;
+  data["c_set"] = statusMsg.cycles_set;
+  data["sens"] = statusMsg.sensors;
+  data["err"] = statusMsg.errors;
 }
 
 void tftDisplayUpdate()
 {
-  if (loaded)
-  {
+  //if (loaded)
+  //{
     //tft.fillScreen(TFT_BLACK);
     int64_t sec = (esp_timer_get_time() / 1000ULL) / 1000ULL;
     int Hours = (sec / 3600UL);
@@ -181,16 +185,38 @@ void tftDisplayUpdate()
     tft.setTextColor(TFT_SKYBLUE, TFT_BLACK);
     tft.drawString(times, 0, 2, 4);
     tft.setTextColor(TFT_WHITE, TFT_BLACK);
-    // tft.setFreeFont(FFrus);
-    // tft.drawString("Заряд"), 150, 2, GFXFF);
-    tft.drawString((String)WiFi.RSSI(), 260, 2, 4);
-    if (statusMsg.temp1 < 10)
+    /*tft.setFreeFont(&GlametrixBold12pt8b_rus);
+    tft.drawString("Датчик 1", 5, 60, 1);
+    tft.drawString("Датчик 2", 105, 60, 1);
+    tft.drawString("Датчик 3", 195, 60, 1);*/
+    
+    tft.drawString((String)WiFi.RSSI(), 270, 2, 4);
+
+    tft.fillRect(5, 124, 312, 43, TFT_BLACK);
+    tft.setTextColor(TFT_YELLOW, TFT_BLACK);
+    tft.drawString(String(statusMsg.temp1, 0), 15, 124, 6);
+    tft.drawString(String(statusMsg.temp2, 0), 120, 124, 6);
+    tft.drawString(String(statusMsg.temp3, 0), 228, 124, 6);
+    
+
+    ///table
+
+    tft.drawRect(2, 95, 316, 75, TFT_DARKGREY);
+
+    tft.drawLine(2, 120, 316, 120, TFT_DARKGREY);
+
+    tft.drawLine(105, 95, 105, 169, TFT_DARKGREY);
+    tft.drawLine(215, 95, 215, 169, TFT_DARKGREY);
+
+    ////end table
+
+    /*if (statusMsg.temp1 < 10)
       tft.drawString((String)statusMsg.temp1, 128, 55, 8);
     else if (statusMsg.temp1 >= 100)
       tft.drawString((String)statusMsg.temp1, 72, 55, 8);
     else
-      tft.drawString((String)statusMsg.temp1, 100, 55, 8);
-  }
+      tft.drawString((String)statusMsg.temp1, 100, 55, 8);*/
+  //}
 }
 
 void setup()
@@ -271,43 +297,424 @@ void setup()
     WiFi.persistent(true);
     tft.fillScreen(TFT_BLACK);
     tft.setTextColor(TFT_SILVER, TFT_BLACK);
-    tft.drawString((String)WiFi.localIP().toString(), 140, 6, 2);
+    tft.drawString((String)WiFi.localIP().toString(), 100, 2, 4);
   }
   else
   {
     WiFi.mode(WIFI_AP);
-    // CapHandler = new CaptiveRequestHandler;
-    // captiva = true;
 
-    char soft_ssid[20];
-    String st_ssid = "Termoplast";
-    st_ssid.toCharArray(soft_ssid, st_ssid.length() + 1);
     WiFi.softAP(soft_ssid, soft_pass);
     delay(100);
     WiFi.softAPConfig(IP, Gateway, Subnet);
     String scr_ip = (String)IP[0] + "." + (String)IP[1] + "." + (String)IP[2] + "." + (String)IP[3];
     tft.fillScreen(TFT_BLACK);
     tft.setTextColor(TFT_SILVER, TFT_BLACK);
-    tft.drawString(scr_ip, 140, 6, 2);
+    tft.drawString(scr_ip, 100, 2, 4);
   }
+
+  tft.setTextColor(TFT_GREENYELLOW, TFT_BLACK);
+  tft.drawString("Sensor 1", 25, 98, 2);
+  tft.drawString("Sensor 2", 135, 98, 2);
+  tft.drawString("Sensor 3", 240, 98, 2);
+
+  ///table
+
+  tft.drawRect(2, 95, 316, 75, TFT_DARKGREY);
+
+  tft.drawLine(2, 120, 316, 120, TFT_DARKGREY);
+
+  tft.drawLine(105, 95, 105, 169, TFT_DARKGREY);
+  tft.drawLine(215, 95, 215, 169, TFT_DARKGREY);
+
+  ////end table
+
+  tft.drawString("/korpus1.stl 128/200", 5, 35, 4);
+  tft.fillRect(5, 65, 310, 20, TFT_GOLD);
+  tft.fillRect(7, 67, 306, 16, TFT_BLACK);
+  tft.fillRect(7, 67, 180, 16, TFT_ORANGE);
+
   tft.setTextColor(TFT_SKYBLUE, TFT_BLACK);
   for (int i = 0; i < 100; i++)
   {
     statusMsg.temp1 = i;
+    statusMsg.temp2 = i;
+    statusMsg.temp3 = i;
     tftDisplayUpdate();
     delay(10);
   }
   statusMsg.temp1 = 0;
+  statusMsg.temp2 = 0;
+  statusMsg.temp3 = 0;
   tftDisplayUpdate();
   loaded = true;
 
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send(http_200, cont_txt, help_html); });
+  server.on("/wifi.html", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send_P(http_200, cont_txt, wifi_html, processor); });
+  server.on("/help.html", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send_P(http_200, cont_txt, help_html); });
+  server.on("/params.html", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send_P(http_200, cont_txt, params_html); });
+  server.on("/stats.html", HTTP_GET, [](AsyncWebServerRequest *request)
+            {
+              // request->send_P(http_200, cont_txt, stats_html);
+            });
+  server.on("/update_e.html", HTTP_GET, [](AsyncWebServerRequest *request)
+            {
+              if (request->authenticate(http_username, http_password))
+              {
+                request->send_P(http_200, cont_txt, update_esp);
+                authenticated = true;
+              }
+              else
+              {
+                // Serial.println( "Unauthorized access." );
+                return request->requestAuthentication();
+              }
+              // request->send_P(http_200, cont_txt, update_esp);
+            });
+  server.on("/update_stm.html", HTTP_GET, [](AsyncWebServerRequest *request)
+            {
+      if ( request->authenticate(http_username, http_password) )
+      {
+        request->send_P(http_200, cont_txt, update_stm);
+        authenticated = true;
+      }
+      else
+      {
+        //Serial.println( "Unauthorized access." );
+        return request->requestAuthentication();
+      } });
+  server.on("/manual.html", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send_P(http_200, cont_txt, manual_html); });
+  server.on("/wifi", HTTP_POST, [](AsyncWebServerRequest *request)
+            {
+        String inputMessage;
+
+        if (request->hasParam("ssid", true)) {
+            inputMessage = request->getParam("ssid", true)->value();
+            p_ssid = inputMessage;
+
+            inputMessage = request->getParam("password", true)->value();
+            p_password = inputMessage;
+
+            inputMessage = request->getParam("client", true)->value();
+            s_client = inputMessage;
+
+            inputMessage = request->getParam("gateway", true)->value();
+            s_gateway = inputMessage;
+
+            inputMessage = request->getParam("subnet", true)->value();
+            s_subnet = inputMessage;
+
+            inputMessage = request->getParam("dns", true)->value();
+            s_dns = inputMessage;
+        }
+        request->send(http_200, cont_txt, reboot_html);
+        config_saved = true;
+        //Serial.println("");  Serial.print("WiFi connected to: "); Serial.println(p_ssid); Serial.println(p_password);
+        //Serial.print("IP address: ");  Serial.println(WiFi.localIP());
+        preferences.begin("my-pref", false);
+        preferences.putBool("config_saved", config_saved);
+        preferences.putString("ssid", p_ssid);
+        preferences.putString("password", p_password);
+        preferences.putString("client", s_client);
+        preferences.putString("gateway", s_gateway);
+        preferences.putString("subnet", s_subnet);
+        preferences.putString("dns", s_dns);
+        preferences.end();
+        ESP.restart(); });
+  server.on(
+      "/update", HTTP_POST, [](AsyncWebServerRequest *request)
+      {
+      if (authenticated) {
+        request->send(http_200, "application/json", "{\"message\":\"Успешно\"}");
+        delay(3000);
+        ESP.restart();
+      }
+      else {
+        request->send(401);
+      } },
+      [](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final)
+      {
+        if (authenticated)
+        {
+          esp_flashing = 1;
+          if (!index)
+          {
+            // Serial.printf( "UPLOAD: Started to receive '%s'.\n", filename.c_str() );
+            String fname = "/" + filename;
+            if ((String)esp_firmware != fname)
+            {
+              return request->send(http_200, "application/json", "{\"message\":\"Ошибка идентификатора\"}");
+            }
+            if (!Update.begin(UPDATE_SIZE_UNKNOWN))
+            {
+              Update.printError(Serial);
+            }
+          }
+          // Serial.printf( "%i bytes received.\n", index );
+          if (Update.write(data, len) != len)
+          {
+            Update.printError(Serial);
+          }
+          if (final)
+          {
+            if (Update.end(true))
+            { // true to set the size to the current progress
+              Serial.printf("Update Success: %u\nRebooting...\n", index);
+            }
+            else
+            {
+              Update.printError(Serial);
+            }
+          }
+        }
+        else
+        {
+          request->send(401);
+        }
+      });
+  server.on("/updatestm", HTTP_POST, [](AsyncWebServerRequest *request)
+    {
+      if (authenticated) {
+        request->send(http_200, "application/json", "{\"message\":\"Файл загружен\"}");
+      }
+      else {
+        request->send(401);
+      }
+    },
+      [](AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final)
+      {
+        if (authenticated)
+        {
+          if (!index)
+          {
+            SPIFFS.remove(stm_firmware);
+            Serial.printf("UPLOAD: Started to receive '%s'.\n", filename.c_str());
+            String fname = "/" + filename;
+            if ((String)stm_firmware == fname)
+            {
+              fsUploadFile = SPIFFS.open(stm_firmware, "w");
+            }
+            else
+              return request->send(http_200, "application/json", "{\"message\":\"Ошибка идентификатора\"}");
+          }
+          // Serial.printf( "%i bytes received.\n", index );
+          if (fsUploadFile)
+          {
+            // Serial.printf( "%i bytes received.\n", index );
+            fsUploadFile.write(data, len);
+          }
+          if (final)
+          {
+            if (fsUploadFile)
+            {
+              fsUploadFile.close();
+              Serial.print(F("firmware size: "));
+              Serial.println(index);
+              stm_flashing = 1;
+            }
+          }
+        }
+        else
+        {
+          request->send(401);
+          events.send("{\"message\":\"Не авторизован\"}", "flash", millis());
+        }
+      });
+  server.on("/control", HTTP_GET, [](AsyncWebServerRequest *request)
+            {
+        //StaticJsonDocument<100> data;
+        serial_busy = 1;
+        if (request->hasParam("123"))
+        {
+            if(request->getParam("888")->value())
+            {
+                //beepCommSend();    
+            }
+        }
+        else if (request->hasParam("234"))
+        {
+          //autoCommSend(STATUS_UPLOAD);
+        }
+        else
+        {
+          request->send(http_200, "application/json", "{\"message\":\"error\"}");
+          //data["message"] = "No message parameter";
+        }
+        //g_request = request;
+        request->send(http_200, "application/json", "{\"message\":\"ok\"}");
+  });
+  server.on("/manual", HTTP_GET, [](AsyncWebServerRequest *request)
+            {        
+        if (request->hasParam("comm"))
+        {
+          int val = request->getParam("comm")->value().toInt();
+          if (val >= 0 && val < 5)
+          {
+            serial_busy = 1;
+            //manualCommSend(static_cast<MOVE_COM>(val));
+          }
+        }
+        else
+        {
+          request->send(http_200, "application/json", "{\"message\":\"error\"}");
+        }
+        request->send(http_200, "application/json", "{\"message\":\"ok\"}"); });
+  server.on("/status", HTTP_GET, [](AsyncWebServerRequest *request)
+            {
+      StaticJsonDocument<512> data;
+      statusToJSON(data);
+      String response;
+      serializeJson(data, response);
+      request->send(http_200, "application/json", response); });
+  server.on("/sens", HTTP_GET, [](AsyncWebServerRequest *request)
+            {
+      StaticJsonDocument<64> data;
+      //sensorsToJSON(data);
+      String response;
+      serializeJson(data, response);
+      request->send(http_200, "application/json", response); });
+  server.on("/stats", HTTP_GET, [](AsyncWebServerRequest *request)
+            {
+      StaticJsonDocument<128> data;
+      //statsToJSON(data);
+      String response;
+      serializeJson(data, response);
+      request->send(http_200, "application/json", response); });
+  server.on("/param", HTTP_GET, [](AsyncWebServerRequest *request)
+            {
+      if (request->hasParam("user_read"))
+      {
+        g_request = request;
+        //serial_busy = 1;
+        //getUserData();
+      }
+      else if (request->hasParam("eng_read"))
+      {
+        //g_request = request;
+        //serial_busy = 1;
+        //getEngData();
+      }
+      else request->send(http_200, "application/json", "{\"message\":\"Ошибка\"}"); });
+  server.on("/param", HTTP_POST, [](AsyncWebServerRequest *request)
+            {
+      String inputMessage;
+      int err = 0;
+      if (request->hasParam("u0", true))
+      {
+        inputMessage = request->getParam("u0", true)->value();
+        //uint16_t mpr = inputMessage.toInt();
+        //if (mpr >= 0 && mpr <= 1000) userSettMsg.mpr = mpr;
+        //else err++;
+        //inputMessage = request->getParam("u1", true)->value();
+        //float max_vel = inputMessage.toFloat();
+        //if (max_vel > 0 && max_vel <= 3.0) userSettMsg.max_velocity = max_vel;
+        //else err++;
+        if (err == 0)
+        {
+          //sendUserData();
+          request->send(http_200, "application/json", "{\"message\":\"Успешно\"}");
+        }
+        else request->send(http_200, "application/json", "{\"message\":\"Ошибка\"}");
+      }
+      else request->send(http_200, "application/json", "{\"message\":\"Ошибка\"}"); });
+  server.on("/sett", HTTP_POST, [](AsyncWebServerRequest *request)
+            {
+        StaticJsonDocument<100> data;
+        if (request->hasParam("message", true))
+        {
+            data["message"] = request->getParam("message", true)->value();
+        }
+        else// if (request->hasParam("myFile"))
+        {
+            //data["message"] = "No message parameter";
+
+            String response;
+            //serializeJson(data, response);
+            int params = request->params();
+            for(int i=0;i<params;i++){
+                AsyncWebParameter* p = request->getParam(i);
+                response += p->name().c_str();
+                response += "=\n=";
+                response += p->value().c_str();
+                response += "=\n=";
+            }
+            request->send(http_200, "application/json", response);
+            return;
+        }
+        //else
+        //{
+        //    data["message"] = "No message parameter";
+        //}
+        String response;
+        serializeJson(data, response);
+        request->send(http_200, "application/json", response); });
+  events.onConnect([](AsyncEventSourceClient *client)
+                   {
+      if(client->lastId()){
+        Serial.printf("Client reconnected! Last message ID that it got is: %u\n", client->lastId());
+      }
+      // send event with message "", id current millis
+      // and set reconnect delay to 10 second
+      client->send("sse start", NULL, millis(), 10000); });
+  server.addHandler(&events);
+
+  server.onNotFound(notFound);
+  server.begin();
+
+  SPIFFS.begin(true);
+
+  esp_task_wdt_init(WDT_TIMEOUT, true);
+  esp_task_wdt_add(NULL);
 
 }
 
+
+
+
+unsigned long lastTime = 0;  
+unsigned long timerDelay = 1000;
+
 void loop()
 {
-  //getStatusCommSend();
-  getSerialData();
-  delay(10);
-  tftDisplayUpdate();
+  esp_task_wdt_reset();
+  if (!esp_flashing) {
+    if (!stm_flashing) getSerialData();
+
+    if (((millis() - lastTime) > timerDelay) && !stm_flashing)
+    {      
+      tftDisplayUpdate();
+      // status update
+      if (!serial_busy) {
+        getStatusCommSend();
+      }
+      else {
+        serial_busy = 0;
+      }
+      lastTime = millis();
+    }
+    if (stm_flashing)
+    {
+      if (!_alite_ )
+      {
+        esp_task_wdt_init(WDT_TIMEOUT, false);
+        _alite_ = 1;
+        alite_update();
+      }
+      flashStm(events, stm_flashing);
+    }
+  }
+  else
+  {
+    if (!_alite_ )
+    {
+      esp_task_wdt_init(WDT_TIMEOUT, false);
+      _alite_ = 1;
+      alite_update();
+    }
+  }
+  yield();
 }
