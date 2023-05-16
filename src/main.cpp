@@ -141,7 +141,6 @@ void getSerialData()
       {
         memcpy(&statusMsg, settDataIn, sizeof(StatusMsgTypeDef));
         count_inbyte = 0;
-        //statusMsg.temp1+=8.0;
       }
     }
     else count_inbyte = 0;
@@ -157,8 +156,8 @@ void statusToJSON(StaticJsonDocument<512> &data)
   data["t3"] = statusMsg.temp3;
   data["c_cou"] = statusMsg.cycles_count;
   data["c_set"] = statusMsg.cycles_set;
-  data["sens"] = statusMsg.sensors;
-  data["err"] = statusMsg.errors;
+  //data["sens"] = (uint16_t *)&statusMsg.sens;
+  //data["err"] = (uint16_t *)&statusMsg.error;
 }
 
 void tftDisplayUpdate()
@@ -192,12 +191,35 @@ void tftDisplayUpdate()
     
     tft.drawString((String)WiFi.RSSI(), 270, 2, 4);
 
+    tft.setTextColor(TFT_GREENYELLOW, TFT_BLACK);
+    static uint32_t cycles_count = 0;
+    static uint32_t cycles_set = 0;
+    if (statusMsg.cycles_count != cycles_count || statusMsg.cycles_set != cycles_set)
+    {
+      tft.fillRect(5, 35, 306, 28, TFT_BLACK);
+      String str = "/korpus1.stl " + (String)statusMsg.cycles_count + "/" +(String)statusMsg.cycles_set;
+      tft.drawString(str, 5, 35, 4);
+      tft.fillRect(5, 65, 310, 20, TFT_GOLD);
+      tft.fillRect(7, 67, 306, 16, TFT_BLACK);
+      int32_t bar_size = map(statusMsg.cycles_count, 0, statusMsg.cycles_set, 0, 306);
+      tft.fillRect(7, 67, bar_size, 16, TFT_ORANGE);
+    }
+    cycles_count = statusMsg.cycles_count;
+    cycles_set = statusMsg.cycles_set;
+    
+
+    static float temp1 = 0;
+    static float temp2 = 0;
+    static float temp3 = 0;
+    if (statusMsg.temp1 != temp1 || statusMsg.temp2 != temp2 || statusMsg.temp3 != temp3)
     tft.fillRect(5, 124, 312, 43, TFT_BLACK);
     tft.setTextColor(TFT_YELLOW, TFT_BLACK);
     tft.drawString(String(statusMsg.temp1, 0), 15, 124, 6);
     tft.drawString(String(statusMsg.temp2, 0), 120, 124, 6);
     tft.drawString(String(statusMsg.temp3, 0), 228, 124, 6);
-    
+    temp1 = statusMsg.temp1;
+    temp2 = statusMsg.temp2;
+    temp3 = statusMsg.temp3;
 
     ///table
 
@@ -328,10 +350,10 @@ void setup()
 
   ////end table
 
-  tft.drawString("/korpus1.stl 128/200", 5, 35, 4);
+  //tft.drawString("/korpus1.stl 128/200", 5, 35, 4);
   tft.fillRect(5, 65, 310, 20, TFT_GOLD);
   tft.fillRect(7, 67, 306, 16, TFT_BLACK);
-  tft.fillRect(7, 67, 180, 16, TFT_ORANGE);
+  //tft.fillRect(7, 67, 180, 16, TFT_ORANGE);
 
   tft.setTextColor(TFT_SKYBLUE, TFT_BLACK);
   for (int i = 0; i < 100; i++)
@@ -349,7 +371,7 @@ void setup()
   loaded = true;
 
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
-            { request->send(http_200, cont_txt, help_html); });
+            { request->send(http_200, cont_txt, main_html); });
   server.on("/wifi.html", HTTP_GET, [](AsyncWebServerRequest *request)
             { request->send_P(http_200, cont_txt, wifi_html, processor); });
   server.on("/help.html", HTTP_GET, [](AsyncWebServerRequest *request)

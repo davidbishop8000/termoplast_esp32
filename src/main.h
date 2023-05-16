@@ -36,6 +36,90 @@
 #define START_MSG1 0x53
 #define WIFI_CONTROL_ID 0x64
 
+typedef struct
+{
+	unsigned char ind : 1;
+	unsigned char b1 : 1;
+	unsigned char b2 : 1;
+	unsigned char b3 : 1;
+	unsigned char b4 : 1;
+	unsigned char b5 : 1;
+	unsigned char b6 : 1;
+	unsigned char b7 : 1;
+} BitParasmsTypeDef;
+
+typedef struct {
+	float volume_per_rev;
+	uint32_t motor1_speed;
+	uint32_t motor1_acc;
+	uint32_t motor2_speed;
+	uint32_t motor2_acc;
+	float temp1;
+	float temp2;
+	float temp3;
+	float Kp;
+	float Ki;
+	float Kd;
+	BitParasmsTypeDef bitParams;
+	uint8_t reservU0;
+	uint8_t reservU1;
+	uint8_t reservU2;
+	uint8_t reservU3;
+	uint8_t reservU4;
+	uint8_t flash_init;
+	uint8_t CS;
+} TermoplastConfigTypeDef;
+
+typedef struct {
+	uint8_t start_msg0;
+	uint8_t start_msg1;
+	uint8_t control_id;
+	uint8_t msg_id;
+	TermoplastConfigTypeDef termConfig;
+	uint8_t reservU0;
+	uint8_t reservU1;
+	uint8_t reservU2;
+	uint8_t CS;
+} stmConfigTypeDef;
+
+typedef struct {
+	unsigned char limit_sw1		:1;
+	unsigned char limit_sw2		:1;
+	unsigned char button1		:1;
+	unsigned char button2		:1;
+	unsigned char button3		:1;
+	unsigned char button4		:1;
+	unsigned char button5		:1;
+	unsigned char button6		:1;
+	unsigned char r0		:1;
+	unsigned char r1		:1;
+	unsigned char r2		:1;
+	unsigned char r3		:1;
+	unsigned char r4		:1;
+	unsigned char r5		:1;
+	unsigned char r6		:1;
+	unsigned char r7		:1;
+} SensorsTypeDef;
+
+typedef struct {
+	unsigned char err0  :1;
+	unsigned char err1  :1;
+	unsigned char err2  :1;
+	unsigned char err3  :1;
+	unsigned char err4  :1;
+	unsigned char err5  :1;
+	unsigned char err6  :1;
+	unsigned char err7  :1;
+	unsigned char err8  :1;
+	unsigned char err9  :1;
+	unsigned char err10 :1;
+	unsigned char err11 :1;
+	unsigned char err12 :1;
+	unsigned char err13 :1;
+	unsigned char err14 :1;
+	unsigned char err15 :1;
+} ErrorMsgTypeDef;
+
 typedef struct {
 	uint8_t start_msg0;
 	uint8_t start_msg1;
@@ -44,8 +128,8 @@ typedef struct {
 	float temp1;
 	float temp2;
 	float temp3;
-	uint16_t sensors;
-	uint16_t errors;
+	SensorsTypeDef sens;
+	ErrorMsgTypeDef error;
 	uint32_t cycles_count;
 	uint32_t cycles_set;
 	uint8_t status;
@@ -58,6 +142,8 @@ enum WIFI_MSG_ID {
 	WIFI_NONE = 0,
 	WIFI_GET_STATUS = 1,
 	WIFI_SET_MANUAL_COM,
+	WIFI_GET_STM_CONFIG,
+	WIFI_SET_STM_CONFIG,
 	WIFI_RESERV1,
 	WIFI_RESERV2,
 	WIFI_RESERV3,
