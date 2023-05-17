@@ -449,14 +449,11 @@ analog-display .analog-for-prmsl {
     <div class="item-1">
       <button class="red" id="manual" onclick="window.location.href = 'manual.html';" color="red">Ручное управление</button>
     </div>
-    <div class="item-1">
-      <button class="grey" value="reset=1">Сброс ошибок &#8855;</button>
-    </div>
     <div class="item-help">
       <a href="sensors.html">Датчики</a>
       <a href="diag.html">Диагностика</a>
-      <a href="esp_params.html">Задание</a>
-      <a href="stm_params.html">Параметры</a>
+      <a href="job.html">Задание</a>
+      <a href="params.html">Параметры</a>
       <a href="help.html">Помощь</a>
       <a href="wifi.html">Настройка сети</a>
     </div>

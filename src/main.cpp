@@ -44,9 +44,12 @@ AsyncEventSource events("/events");
 
 File fsUploadFile;
 
-uint8_t settDataIn[50];
+uint8_t settDataIn[100];
+
+void stmConfigToJSON(StaticJsonDocument<256> &data);
 
 StatusMsgTypeDef statusMsg;
+StmConfigTypeDef stmConfig;
 
 void notFound(AsyncWebServerRequest *request)
 {
@@ -118,6 +121,24 @@ void getStatusCommSend()
   dataSend((uint8_t *)&commMsg, sizeof(commMsg));
 }
 
+void getSTMConfig()
+{
+  commMsg.msg_id = WIFI_GET_STM_CONFIG;
+  commMsg.comm = 0;
+  commMsg.CS = calculateCS((uint8_t *)&commMsg, sizeof(commMsg) - 1);
+  dataSend((uint8_t *)&commMsg, sizeof(commMsg));
+}
+
+void setStmConfig()
+{
+  stmConfig.start_msg0 = START_MSG0,
+  stmConfig.start_msg1 = START_MSG1,
+  stmConfig.control_id = WIFI_CONTROL_ID;
+  stmConfig.msg_id = WIFI_SET_STM_CONFIG;
+  stmConfig.CS = calculateCS((uint8_t *)&stmConfig, sizeof(stmConfig)-1);
+  dataSend((uint8_t *)&stmConfig, sizeof(stmConfig));
+}
+
 AsyncWebServerRequest *g_request;
 
 void getSerialData()
@@ -127,7 +148,7 @@ void getSerialData()
   {
     settDataIn[count_inbyte] = Serial1.read();
     count_inbyte++;
-    if (count_inbyte >= 50)
+    if (count_inbyte >= 100)
     {
       count_inbyte = 0;
       break;
@@ -142,11 +163,23 @@ void getSerialData()
         memcpy(&statusMsg, settDataIn, sizeof(StatusMsgTypeDef));
         count_inbyte = 0;
       }
+      else if (settDataIn[3] == WIFI_GET_STM_CONFIG && count_inbyte >= sizeof(StmConfigTypeDef))
+      {
+        memcpy(&stmConfig, settDataIn, sizeof(StmConfigTypeDef));
+        count_inbyte = 0;
+        StaticJsonDocument<256> data;
+        stmConfigToJSON(data);
+        String response;
+        serializeJson(data, response);
+        if (g_request != NULL) {
+          g_request->send(http_200, "application/json", response);
+        }
+      }
     }
     else count_inbyte = 0;
   }
   else count_inbyte = 0;
-  serial_busy = 0;
+  serial_busy = 0;  
 }
 
 void statusToJSON(StaticJsonDocument<512> &data)
@@ -158,6 +191,21 @@ void statusToJSON(StaticJsonDocument<512> &data)
   data["c_set"] = statusMsg.cycles_set;
   //data["sens"] = (uint16_t *)&statusMsg.sens;
   //data["err"] = (uint16_t *)&statusMsg.error;
+}
+void stmConfigToJSON(StaticJsonDocument<256> &data)
+{
+  data["u0"] = stmConfig.termConfig.volume_per_rev;
+  data["u1"] = stmConfig.termConfig.motor1_speed;
+  data["u2"] = stmConfig.termConfig.motor1_acc;
+  data["u3"] = stmConfig.termConfig.motor2_speed;
+  data["u4"] = stmConfig.termConfig.motor2_acc;
+  data["u5"] = stmConfig.termConfig.temp1;
+  data["u6"] = stmConfig.termConfig.temp2;
+  data["u7"] = stmConfig.termConfig.temp3;
+  data["u8"] = stmConfig.termConfig.Kp;
+  data["u9"] = stmConfig.termConfig.Kp;
+  data["u10"] = stmConfig.termConfig.Kp;
+  data["u11"] = stmConfig.termConfig.bitParams.ind;
 }
 
 void tftDisplayUpdate()
@@ -196,7 +244,7 @@ void tftDisplayUpdate()
     static uint32_t cycles_set = 0;
     if (statusMsg.cycles_count != cycles_count || statusMsg.cycles_set != cycles_set)
     {
-      tft.fillRect(5, 35, 306, 28, TFT_BLACK);
+      tft.fillRect(5, 35, 315, 28, TFT_BLACK);
       String str = "/korpus1.stl " + (String)statusMsg.cycles_count + "/" +(String)statusMsg.cycles_set;
       tft.drawString(str, 5, 35, 4);
       tft.fillRect(5, 65, 310, 20, TFT_GOLD);
@@ -447,6 +495,10 @@ void setup()
         preferences.putString("dns", s_dns);
         preferences.end();
         ESP.restart(); });
+    server.on("/params.html", HTTP_GET, [](AsyncWebServerRequest *request)
+    {
+        request->send_P(http_200, cont_txt, params_html);
+    });
   server.on(
       "/update", HTTP_POST, [](AsyncWebServerRequest *request)
       {
@@ -607,18 +659,12 @@ void setup()
       serializeJson(data, response);
       request->send(http_200, "application/json", response); });
   server.on("/param", HTTP_GET, [](AsyncWebServerRequest *request)
-            {
+            {           
       if (request->hasParam("user_read"))
       {
         g_request = request;
-        //serial_busy = 1;
-        //getUserData();
-      }
-      else if (request->hasParam("eng_read"))
-      {
-        //g_request = request;
-        //serial_busy = 1;
-        //getEngData();
+        serial_busy = 1;
+        getSTMConfig();
       }
       else request->send(http_200, "application/json", "{\"message\":\"Ошибка\"}"); });
   server.on("/param", HTTP_POST, [](AsyncWebServerRequest *request)
@@ -628,16 +674,36 @@ void setup()
       if (request->hasParam("u0", true))
       {
         inputMessage = request->getParam("u0", true)->value();
-        //uint16_t mpr = inputMessage.toInt();
-        //if (mpr >= 0 && mpr <= 1000) userSettMsg.mpr = mpr;
-        //else err++;
-        //inputMessage = request->getParam("u1", true)->value();
-        //float max_vel = inputMessage.toFloat();
-        //if (max_vel > 0 && max_vel <= 3.0) userSettMsg.max_velocity = max_vel;
-        //else err++;
+        stmConfig.termConfig.volume_per_rev = inputMessage.toFloat();
+        inputMessage = request->getParam("u1", true)->value();
+        stmConfig.termConfig.motor1_speed = inputMessage.toInt();
+        inputMessage = request->getParam("u2", true)->value();
+        stmConfig.termConfig.motor1_acc = inputMessage.toInt();
+        inputMessage = request->getParam("u3", true)->value();
+        stmConfig.termConfig.motor2_speed = inputMessage.toInt();
+        inputMessage = request->getParam("u4", true)->value();
+        stmConfig.termConfig.motor2_acc = inputMessage.toInt();
+        inputMessage = request->getParam("u5", true)->value();
+        stmConfig.termConfig.temp1 = inputMessage.toInt();
+        inputMessage = request->getParam("u6", true)->value();
+        stmConfig.termConfig.temp2 = inputMessage.toInt();
+        inputMessage = request->getParam("u7", true)->value();
+        stmConfig.termConfig.temp3 = inputMessage.toInt();
+        inputMessage = request->getParam("u8", true)->value();
+        stmConfig.termConfig.Kp = inputMessage.toFloat();
+        inputMessage = request->getParam("u9", true)->value();
+        stmConfig.termConfig.Ki = inputMessage.toFloat();
+        inputMessage = request->getParam("u10", true)->value();
+        stmConfig.termConfig.Kd = inputMessage.toFloat();
+        if (request->hasParam("u11", true))
+        {
+          inputMessage = request->getParam("u11", true)->value();
+          stmConfig.termConfig.bitParams.ind = inputMessage.toInt();
+        }
+        else stmConfig.termConfig.bitParams.ind = 0;
         if (err == 0)
         {
-          //sendUserData();
+          setStmConfig();
           request->send(http_200, "application/json", "{\"message\":\"Успешно\"}");
         }
         else request->send(http_200, "application/json", "{\"message\":\"Ошибка\"}");

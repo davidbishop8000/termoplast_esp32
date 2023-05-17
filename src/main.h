@@ -62,10 +62,6 @@ typedef struct {
 	float Kd;
 	BitParasmsTypeDef bitParams;
 	uint8_t reservU0;
-	uint8_t reservU1;
-	uint8_t reservU2;
-	uint8_t reservU3;
-	uint8_t reservU4;
 	uint8_t flash_init;
 	uint8_t CS;
 } TermoplastConfigTypeDef;
@@ -80,7 +76,7 @@ typedef struct {
 	uint8_t reservU1;
 	uint8_t reservU2;
 	uint8_t CS;
-} stmConfigTypeDef;
+} StmConfigTypeDef;
 
 typedef struct {
 	unsigned char limit_sw1		:1;

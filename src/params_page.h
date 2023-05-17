@@ -111,7 +111,7 @@ const char params_html[] PROGMEM = R"rawliteral(
         <button id="user_save">Сохранить</button>
     </div><script>      
       let user_d = [];
-      for (let i = 0; i<=12; i++)
+      for (let i = 0; i<=11; i++)
       {
         user_d[i] = document.getElementById(`u${i}`);
       }
@@ -124,12 +124,12 @@ const char params_html[] PROGMEM = R"rawliteral(
             user_d[0].value = parseFloat(data.u0).toFixed(2);
             for (let i = 1; i<=7; i++)
             {
-              user_d[i].value = data['u${i}'];
+              user_d[i].value = data[`u${i}`];
             }
             user_d[8].value = parseFloat(data.u9).toFixed(2);
             user_d[9].value = parseFloat(data.u10).toFixed(2);
             user_d[10].value = parseFloat(data.u11).toFixed(2);
-            user_d[11].checked = data.u12;
+            user_d[11].checked = data.u11;
 					  //console.log(data);
           }
         } catch (e) {
