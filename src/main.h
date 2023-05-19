@@ -134,17 +134,48 @@ typedef struct {
 	uint8_t CS;
 } StatusMsgTypeDef;
 
+typedef struct {
+	uint8_t start_msg0;
+	uint8_t start_msg1;
+	uint8_t control_id;
+	uint8_t msg_id;
+	uint8_t comm;
+	uint8_t c1;
+	uint8_t c2;
+	uint8_t c3;
+	float volume;
+	uint32_t time_hold;
+	uint32_t cycles;
+	uint8_t r0;
+	uint8_t r1;
+	uint8_t r2;
+	uint8_t CS;
+} JobMsgTypeDef;
+
 enum WIFI_MSG_ID {
 	WIFI_NONE = 0,
 	WIFI_GET_STATUS = 1,
 	WIFI_SET_MANUAL_COM,
 	WIFI_GET_STM_CONFIG,
 	WIFI_SET_STM_CONFIG,
+	WIFI_SET_JOB,
+	WIFI_SET_HEATING,
 	WIFI_RESERV1,
 	WIFI_RESERV2,
 	WIFI_RESERV3,
 	WIFI_RESERV4,
 	WIFI_MSG_MAX,
+};
+
+enum JOB_STATUS {
+	JOB_WAITING = 0,
+	JOB_START,
+	JOB_PAUSE,
+	JOB_RESUME,
+	JOB_COMPLETED,
+	JOB_STOP,
+	JOB_ERROR,
+	JOB_MAX,
 };
 
 // control command send

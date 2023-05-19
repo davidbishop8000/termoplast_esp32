@@ -49,6 +49,7 @@ uint8_t settDataIn[100];
 void stmConfigToJSON(StaticJsonDocument<256> &data);
 
 StatusMsgTypeDef statusMsg;
+JobMsgTypeDef jobMsg;
 StmConfigTypeDef stmConfig;
 
 void notFound(AsyncWebServerRequest *request)
@@ -129,6 +130,14 @@ void getSTMConfig()
   dataSend((uint8_t *)&commMsg, sizeof(commMsg));
 }
 
+void setHeating()
+{
+  commMsg.msg_id = WIFI_SET_HEATING;
+  commMsg.comm = 0;
+  commMsg.CS = calculateCS((uint8_t *)&commMsg, sizeof(commMsg) - 1);
+  dataSend((uint8_t *)&commMsg, sizeof(commMsg));
+}
+
 void setStmConfig()
 {
   stmConfig.start_msg0 = START_MSG0,
@@ -137,6 +146,31 @@ void setStmConfig()
   stmConfig.msg_id = WIFI_SET_STM_CONFIG;
   stmConfig.CS = calculateCS((uint8_t *)&stmConfig, sizeof(stmConfig)-1);
   dataSend((uint8_t *)&stmConfig, sizeof(stmConfig));
+}
+
+void startJob(float _volume, uint32_t _cycles, uint32_t _time_hold)
+{
+  jobMsg.start_msg0 = START_MSG0,
+  jobMsg.start_msg1 = START_MSG1,
+  jobMsg.control_id = WIFI_CONTROL_ID;
+  jobMsg.msg_id = WIFI_SET_JOB;
+  jobMsg.comm = JOB_START;
+  jobMsg.volume = _volume;
+  jobMsg.cycles = _cycles;
+  jobMsg.time_hold = _time_hold;
+  jobMsg.CS = calculateCS((uint8_t *)&jobMsg, sizeof(jobMsg)-1);
+  dataSend((uint8_t *)&jobMsg, sizeof(jobMsg));
+}
+
+void setJob(JOB_STATUS _comm)
+{
+  jobMsg.start_msg0 = START_MSG0,
+  jobMsg.start_msg1 = START_MSG1,
+  jobMsg.control_id = WIFI_CONTROL_ID;
+  jobMsg.msg_id = WIFI_SET_JOB;
+  jobMsg.comm = _comm;
+  jobMsg.CS = calculateCS((uint8_t *)&jobMsg, sizeof(jobMsg)-1);
+  dataSend((uint8_t *)&jobMsg, sizeof(jobMsg));
 }
 
 AsyncWebServerRequest *g_request;
