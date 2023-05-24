@@ -119,6 +119,19 @@
       align-items: center;
       justify-content: center;
     }
+    .item {
+      border: 2px solid black;
+      border-radius: 10px;
+      grid-template-columns: auto 1fr;
+      margin-top: -2px;
+      margin-left: 15px;
+      margin-right: 15px;
+      display: grid;
+      grid-template-rows: 1fr;
+      padding: 1px;
+      border: 2px solid black;
+      border-radius: 10px;
+    }
     .item-status {
       margin-left: 15px;
       margin-right: 15px;
@@ -436,7 +449,15 @@ analog-display .analog-for-prmsl {
         <analog-display id="temp2" class="analogdisplay-night" title="Hum" id="hum-02" min-value="0" max-value="290" value="0" major-ticks="40" minor-ticks="10" with-border="true" overlap="50" digital-data-len="3" digital-data-val="0" width="120" height="120"></analog-display>
         <analog-display id="temp3" class="analogdisplay-night" title="Hum" id="hum-03" min-value="0" max-value="290" value="0" major-ticks="40" minor-ticks="10" with-border="true" overlap="50" digital-data-len="3" digital-data-val="0" width="120" height="120"></analog-display>
 	</div>
+  <div class="item">
+    <p>Объем:</p>
+    <input type="text" name="u0" id="u0" pattern="[0-9]{1}\.\d{0,1}" placeholder="1.0">
+
+    <p>Время форм.:</p>
+    <input type="text" name="u1" id="u1" pattern="[0-9]{1,3}" placeholder="100">
+  </div>
     <div class="item-uplquant">
+      
       <p>Кол-во деталей:</p>
       <input type="number" name="" id="input" min="1" placeholder="--">
       <button class="grey-d" id="btn">&#9654;</button>
@@ -479,12 +500,14 @@ analog-display .analog-for-prmsl {
     }
     const btn = document.querySelector('#btn');
     const input = document.querySelector('#input');
+    const volume =  document.getElementById(`u0`);
+    const press_time =  document.getElementById(`u1`);
     btn.addEventListener('click', sendGet);
     async function sendGet() {
       if (input.value) {
         try {
           input.classList.remove('error');
-          const response = await fetch(`control?pallet_quant=${input.value}`);
+          const response = await fetch(`control?quant=${input.value}&vol=${volume.value}&time=${press_time.value}`);
           if (response.ok) {
             const result = await response.json();
             console.log(`control?pallet_quant=${input.value}`);
