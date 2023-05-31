@@ -223,8 +223,13 @@ void statusToJSON(StaticJsonDocument<512> &data)
   data["t3"] = statusMsg.temp3;
   data["c_cou"] = statusMsg.cycles_count;
   data["c_set"] = statusMsg.cycles_set;
+  data["status"] = "выполнено "+ (String)statusMsg.cycles_count + "+ из " + (String)statusMsg.cycles_set;
+  int32_t rssi = WiFi.RSSI();
+  data["signal"] = rssi; //-20-very_good  -60-normal   -80-bad
   //data["sens"] = (uint16_t *)&statusMsg.sens;
   //data["err"] = (uint16_t *)&statusMsg.error;
+  data["warn"] = "Нет";
+  data["err"] = "Нет";
 }
 void stmConfigToJSON(StaticJsonDocument<256> &data)
 {
@@ -636,16 +641,13 @@ void setup()
             {
         //StaticJsonDocument<100> data;
         serial_busy = 1;
-        if (request->hasParam("123"))
+        if (request->hasParam("quant"))
         {
-            if(request->getParam("888")->value())
-            {
-                //beepCommSend();    
-            }
-        }
-        else if (request->hasParam("234"))
-        {
-          //autoCommSend(STATUS_UPLOAD);
+            uint32_t quant = (request->getParam("quant")->value()).toInt();
+            float vol  = (request->getParam("vol")->value()).toFloat();
+            uint32_t time = (request->getParam("time")->value()).toInt();
+            startJob(vol, quant, time);
+            request->send(http_200, "application/json", "{\"message\":\"ok\"}");
         }
         else
         {
@@ -653,7 +655,7 @@ void setup()
           //data["message"] = "No message parameter";
         }
         //g_request = request;
-        request->send(http_200, "application/json", "{\"message\":\"ok\"}");
+        //request->send(http_200, "application/json", "{\"message\":\"ok\"}");
   });
   server.on("/manual", HTTP_GET, [](AsyncWebServerRequest *request)
             {        
@@ -807,7 +809,13 @@ void loop()
     if (!stm_flashing) getSerialData();
 
     if (((millis() - lastTime) > timerDelay) && !stm_flashing)
-    {      
+    {
+      StaticJsonDocument<512> data;
+      statusToJSON(data);
+      String response;
+      serializeJson(data, response);
+      events.send(response.c_str(), "status", millis());
+
       tftDisplayUpdate();
       // status update
       if (!serial_busy) {

@@ -123,6 +123,19 @@ const char main_html[] PROGMEM = R"rawliteral(
       align-items: center;
       justify-content: center;
     }
+    .item {
+      border: 2px solid black;
+      border-radius: 10px;
+      grid-template-columns: auto 1fr;
+      margin-top: -2px;
+      margin-left: 15px;
+      margin-right: 15px;
+      display: grid;
+      grid-template-rows: 1fr;
+      padding: 1px;
+      border: 2px solid black;
+      border-radius: 10px;
+    }
     .item-status {
       margin-left: 15px;
       margin-right: 15px;
@@ -307,10 +320,10 @@ direction-display .analogdisplay-day {
   --outline-color: DarkGrey;
   --major-tick-color: red;
   --minor-tick-color: red;
-  --value-color: red;
+  --value-color: rgb(255, 255, 255);
   --value-outline-color: black;
   --value-nb-decimal: 1;
-  --hand-color: rgba(255, 0, 0, 0.4);
+  --hand-color: rgba(204, 255, 0, 0.4);
   --hand-outline-color: red;
   --with-hand-shadow: true;
   --knob-color: #dd1010;
@@ -440,7 +453,15 @@ analog-display .analog-for-prmsl {
         <analog-display id="temp2" class="analogdisplay-night" title="Hum" id="hum-02" min-value="0" max-value="290" value="0" major-ticks="40" minor-ticks="10" with-border="true" overlap="50" digital-data-len="3" digital-data-val="0" width="120" height="120"></analog-display>
         <analog-display id="temp3" class="analogdisplay-night" title="Hum" id="hum-03" min-value="0" max-value="290" value="0" major-ticks="40" minor-ticks="10" with-border="true" overlap="50" digital-data-len="3" digital-data-val="0" width="120" height="120"></analog-display>
 	</div>
+  <div class="item">
+    <p>Объем:</p>
+    <input type="text" name="u0" id="u0" pattern="[0-9]{1}\.\d{0,1}" placeholder="1.0">
+
+    <p>Время форм.:</p>
+    <input type="text" name="u1" id="u1" pattern="[0-9]{1,3}" placeholder="100">
+  </div>
     <div class="item-uplquant">
+      
       <p>Кол-во деталей:</p>
       <input type="number" name="" id="input" min="1" placeholder="--">
       <button class="grey-d" id="btn">&#9654;</button>
@@ -483,15 +504,17 @@ analog-display .analog-for-prmsl {
     }
     const btn = document.querySelector('#btn');
     const input = document.querySelector('#input');
+    const volume =  document.getElementById(`u0`);
+    const press_time =  document.getElementById(`u1`);
     btn.addEventListener('click', sendGet);
     async function sendGet() {
       if (input.value) {
         try {
           input.classList.remove('error');
-          const response = await fetch(`control?pallet_quant=${input.value}`);
+          const response = await fetch(`control?quant=${input.value}&vol=${volume.value}&time=${press_time.value}`);
           if (response.ok) {
             const result = await response.json();
-            console.log(`control?pallet_quant=${input.value}`);
+            console.log(`control?quant=${input.value}`);
           }
         } catch (e) {
           console.log(e);
@@ -521,16 +544,21 @@ analog-display .analog-for-prmsl {
         console.log("status_data ", e.data);
         //const json = e.data.json();
         const obj = JSON.parse(e.data);
-        console.log("status_parse ", obj.charge, obj.status, obj.signal, obj.mode, obj.quant, obj.downl, obj.size, obj.err, obj.warn);
-        //document.getElementById("charge").innerHTML = e.data;
-        document.getElementById("charge").innerHTML = obj.charge+"%";
-        let str_mode;
-        if (obj.mode == 1) str_mode = "FIFO";
-        else str_mode = "LIFO";
-        document.getElementById("mode").innerHTML = str_mode;
+        console.log("status_parse ", obj.status, obj.signal, obj.t1, obj.t2, obj.t3, obj.err, obj.warn);
+
+        const temp1 = document.getElementById("temp1");
+        const temp2 = document.getElementById("temp2");
+        const temp3 = document.getElementById("temp3");
+
+        temp1.value = obj.t1;
+				temp1.digitalDataVal = obj.t1;
+				temp2.value = obj.t2;
+        temp2.digitalDataVal = obj.t2;
+        temp3.value = obj.t3;
+        temp3.digitalDataVal = obj.t3;
+
         document.getElementById("signal").innerHTML = obj.signal;
         document.getElementById("status").innerHTML = obj.status;
-        if (obj.status == "Выгрузка" && obj.downl > 0) document.getElementById("input").value = obj.downl;
         if (obj.err[0] == "Нет" && obj.warn[0] == "Нет") document.getElementById("block_errors").style.display = 'none';
         else {
           document.getElementById("block_errors").style.display = 'block';
@@ -1410,23 +1438,8 @@ function setMinMax(cb, id) {
 function setDigitVal(field, id) {
   document.getElementById(id).digitalDataVal = field.value;
 }
-const temp1 = document.getElementById("temp1");
-const temp2 = document.getElementById("temp2");
-const temp3 = document.getElementById("temp3");
-setInterval(async () => {
-					temp1.value++;
-					temp1.digitalDataVal++;
-					temp2.value+=2;
-          temp2.digitalDataVal+=2;
-          temp3.value+=4;
-          temp3.digitalDataVal+=4;
-					//console.log(data);
-		}, 200);
-
-
-
-  </script>
-  <footer>&copy;skynet</footer>
+</script>
+<footer>&copy;skynet</footer>
 </body>
 </html>
 )rawliteral";

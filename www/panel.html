@@ -316,10 +316,10 @@ direction-display .analogdisplay-day {
   --outline-color: DarkGrey;
   --major-tick-color: red;
   --minor-tick-color: red;
-  --value-color: red;
+  --value-color: rgb(255, 255, 255);
   --value-outline-color: black;
   --value-nb-decimal: 1;
-  --hand-color: rgba(255, 0, 0, 0.4);
+  --hand-color: rgba(204, 255, 0, 0.4);
   --hand-outline-color: red;
   --with-hand-shadow: true;
   --knob-color: #dd1010;
@@ -510,7 +510,7 @@ analog-display .analog-for-prmsl {
           const response = await fetch(`control?quant=${input.value}&vol=${volume.value}&time=${press_time.value}`);
           if (response.ok) {
             const result = await response.json();
-            console.log(`control?pallet_quant=${input.value}`);
+            console.log(`control?quant=${input.value}`);
           }
         } catch (e) {
           console.log(e);
@@ -540,16 +540,21 @@ analog-display .analog-for-prmsl {
         console.log("status_data ", e.data);
         //const json = e.data.json();
         const obj = JSON.parse(e.data);
-        console.log("status_parse ", obj.charge, obj.status, obj.signal, obj.mode, obj.quant, obj.downl, obj.size, obj.err, obj.warn);
-        //document.getElementById("charge").innerHTML = e.data;
-        document.getElementById("charge").innerHTML = obj.charge+"%";
-        let str_mode;
-        if (obj.mode == 1) str_mode = "FIFO";
-        else str_mode = "LIFO";
-        document.getElementById("mode").innerHTML = str_mode;
+        console.log("status_parse ", obj.status, obj.signal, obj.t1, obj.t2, obj.t3, obj.err, obj.warn);
+
+        const temp1 = document.getElementById("temp1");
+        const temp2 = document.getElementById("temp2");
+        const temp3 = document.getElementById("temp3");
+
+        temp1.value = obj.t1;
+				temp1.digitalDataVal = obj.t1;
+				temp2.value = obj.t2;
+        temp2.digitalDataVal = obj.t2;
+        temp3.value = obj.t3;
+        temp3.digitalDataVal = obj.t3;
+
         document.getElementById("signal").innerHTML = obj.signal;
         document.getElementById("status").innerHTML = obj.status;
-        if (obj.status == "Выгрузка" && obj.downl > 0) document.getElementById("input").value = obj.downl;
         if (obj.err[0] == "Нет" && obj.warn[0] == "Нет") document.getElementById("block_errors").style.display = 'none';
         else {
           document.getElementById("block_errors").style.display = 'block';
@@ -1429,7 +1434,7 @@ function setMinMax(cb, id) {
 function setDigitVal(field, id) {
   document.getElementById(id).digitalDataVal = field.value;
 }
-const temp1 = document.getElementById("temp1");
+/*const temp1 = document.getElementById("temp1");
 const temp2 = document.getElementById("temp2");
 const temp3 = document.getElementById("temp3");
 setInterval(async () => {
@@ -1441,7 +1446,7 @@ setInterval(async () => {
           temp3.digitalDataVal+=4;
 					//console.log(data);
 		}, 200);
-
+*/
 
 
   </script>
