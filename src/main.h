@@ -54,6 +54,8 @@ typedef struct {
 	uint32_t motor1_acc;
 	uint32_t motor2_speed;
 	uint32_t motor2_acc;
+	uint32_t time_hold;
+	float volume;
 	float temp1;
 	float temp2;
 	float temp3;

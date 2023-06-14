@@ -712,28 +712,32 @@ void setup()
         inputMessage = request->getParam("u0", true)->value();
         stmConfig.termConfig.volume_per_rev = inputMessage.toFloat();
         inputMessage = request->getParam("u1", true)->value();
-        stmConfig.termConfig.motor1_speed = inputMessage.toInt();
+        stmConfig.termConfig.volume = inputMessage.toFloat();
         inputMessage = request->getParam("u2", true)->value();
-        stmConfig.termConfig.motor1_acc = inputMessage.toInt();
+        stmConfig.termConfig.motor1_speed = inputMessage.toInt();
         inputMessage = request->getParam("u3", true)->value();
-        stmConfig.termConfig.motor2_speed = inputMessage.toInt();
+        stmConfig.termConfig.motor1_acc = inputMessage.toInt();
         inputMessage = request->getParam("u4", true)->value();
-        stmConfig.termConfig.motor2_acc = inputMessage.toInt();
+        stmConfig.termConfig.motor2_speed = inputMessage.toInt();
         inputMessage = request->getParam("u5", true)->value();
-        stmConfig.termConfig.temp1 = inputMessage.toInt();
+        stmConfig.termConfig.motor2_acc = inputMessage.toInt();
         inputMessage = request->getParam("u6", true)->value();
-        stmConfig.termConfig.temp2 = inputMessage.toInt();
+        stmConfig.termConfig.time_hold = inputMessage.toInt();
         inputMessage = request->getParam("u7", true)->value();
-        stmConfig.termConfig.temp3 = inputMessage.toInt();
+        stmConfig.termConfig.temp1 = inputMessage.toInt();
         inputMessage = request->getParam("u8", true)->value();
-        stmConfig.termConfig.Kp = inputMessage.toFloat();
+        stmConfig.termConfig.temp2 = inputMessage.toInt();
         inputMessage = request->getParam("u9", true)->value();
-        stmConfig.termConfig.Ki = inputMessage.toFloat();
+        stmConfig.termConfig.temp3 = inputMessage.toInt();
         inputMessage = request->getParam("u10", true)->value();
+        stmConfig.termConfig.Kp = inputMessage.toFloat();
+        inputMessage = request->getParam("u11", true)->value();
+        stmConfig.termConfig.Ki = inputMessage.toFloat();
+        inputMessage = request->getParam("u12", true)->value();
         stmConfig.termConfig.Kd = inputMessage.toFloat();
-        if (request->hasParam("u11", true))
+        if (request->hasParam("u13", true))
         {
-          inputMessage = request->getParam("u11", true)->value();
+          inputMessage = request->getParam("u13", true)->value();
           stmConfig.termConfig.bitParams.ind = inputMessage.toInt();
         }
         else stmConfig.termConfig.bitParams.ind = 0;
